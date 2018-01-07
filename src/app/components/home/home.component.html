@@ -2,4 +2,12 @@
   <h1 class="title">
     {{ 'PAGES.HOME.TITLE' | translate }}
   </h1>
+  <div class="section">
+    <button (click)="connect()">Connect</button>
+    <textarea [(ngModel)]="connectResponseString"></textarea>
+  </div>
+  <div class="section">
+    <button (click)="query()">Query</button>
+    <textarea [(ngModel)]="queryResponseString"></textarea>
+  </div>
 </div>

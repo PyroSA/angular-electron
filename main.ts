@@ -1,5 +1,7 @@
-import { app, BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, screen, ipcMain } from 'electron';
 import * as path from 'path';
+import * as sql from 'mssql';
+import { connect } from 'tls';
 
 let win, serve;
 const args = process.argv.slice(1);
@@ -11,7 +13,6 @@ if (serve) {
 }
 
 function createWindow() {
-
   const electronScreen = screen;
   const size = electronScreen.getPrimaryDisplay().workAreaSize;
 
@@ -40,8 +41,53 @@ function createWindow() {
   });
 }
 
-try {
+let pool;
 
+async function connectDb(event, arg) {
+  console.log('Connect', arg);
+  const config = {
+    user: 'sa',
+    password: 'Pass-123',
+    server: 'WERNER-PC\\SQLEXPRESS', // You can use 'localhost\\instance' to connect to named instance
+    database: 'test',
+  };
+  try {
+    pool = await sql.connect(config)
+    console.dir(pool);
+    event.sender.send('db-connect-reply', {
+      connection: true
+    });
+  } catch (err) {
+    console.error(err);
+    event.sender.send('db-connect-reply', {
+      error: new Error('Database not connected'),
+      connection: false
+    });
+  }
+}
+
+async function queryDb(event, arg) {
+  console.log('Query', arg);
+  if (!pool) {
+    event.sender.send('db-query-reply', {
+      error: new Error('Database not connected')
+    });
+  }
+
+  try {
+    const queryResult = await pool.request()
+        .input('id', sql.Int, arg.value || 0)
+        .query('select * from test where id > @id')
+
+    console.dir(queryResult)
+    event.sender.send('db-query-reply', queryResult);
+  } catch (err) {
+    console.error(err);
+    event.sender.send('db-query-reply', { error: err });
+  }
+}
+
+try {
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   // Some APIs can only be used after this event occurs.
@@ -64,7 +110,9 @@ try {
     }
   });
 
-} catch (e) {
-  // Catch Error
-  // throw e;
+  ipcMain.on('db-connect', connectDb);
+  ipcMain.on('db-query', queryDb);
+
+} catch (err) {
+  console.log('Main loop error', err);
 }
