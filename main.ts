@@ -46,10 +46,10 @@ let pool;
 async function connectDb(event, arg) {
   console.log('Connect', arg);
   const config = {
-    user: 'sa',
-    password: 'Pass-123',
-    server: 'WERNER-PC\\SQLEXPRESS', // You can use 'localhost\\instance' to connect to named instance
-    database: 'test',
+    user: arg.user,
+    password: arg.password,
+    server: arg.server, // You can use 'localhost\\instance' to connect to named instance
+    database: arg.database,
   };
   try {
     pool = await sql.connect(config)
@@ -75,9 +75,13 @@ async function queryDb(event, arg) {
   }
 
   try {
+    // ToDo: decide if we're happy with raw queries, or want inputs
+    // const queryResult = await pool.request()
+    //     .input('id', sql.Int, arg.value || 0)
+    //     .query('select * from test where id > @id')
+
     const queryResult = await pool.request()
-        .input('id', sql.Int, arg.value || 0)
-        .query('select * from test where id > @id')
+      .query(arg.query);
 
     console.dir(queryResult)
     event.sender.send('db-query-reply', queryResult);

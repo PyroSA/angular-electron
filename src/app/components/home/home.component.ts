@@ -17,7 +17,14 @@ export class HomeComponent implements OnInit {
 
   public connect () {
     console.log('connect');
-    ipcRenderer.send('db-connect', { a: 'a', b: 'b', c: 'c'});
+    // TODO: Populate config from UI
+    const config = {
+      user: 'sa',
+      password: 'Pass-123',
+      server: '192.168.56.10\\SQL2014', // You can use 'localhost\\instance' to connect to named instance
+      database: 'Conv',
+    };
+    ipcRenderer.send('db-connect', config);
   }
 
   private connectReply(event, arg) {
@@ -28,7 +35,7 @@ export class HomeComponent implements OnInit {
 
   public query () {
     console.log('query');
-    ipcRenderer.send('db-query', 'zoom');
+    ipcRenderer.send('db-query', { query: 'select * from uv_OUTPUT_EntityMasterInfo' });
   }
 
   private queryReply(event, arg) {
